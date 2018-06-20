@@ -62,4 +62,18 @@ tweets <- rdt %>% mutate(speech = if_else(date %in% speeches$date, 1, 0))
 tweets <- left_join(tweets, dow)
 tweets <- left_join(tweets, sp500)
 
+## Adding additional predictors
+
+# Time of day
+
+ggplot() + geom_bar(aes((hour(tweets$time)))) + xlab(label = "hour")
+t_days <- tweets$date %>% unique() %>% length()
+atpd <- nrow(tweets) / t_days
+d <- tweets %>% group_by(hour(tweets$time)) %>% count() %>% as.data.frame()
+d$n <- d$n / t_days
+colnames(d) <- c("hour", "count")
+d %>% ggplot(aes(hour, count)) + geom_point() + geom_line()
+
 ## Dealing with missing values
+
+
