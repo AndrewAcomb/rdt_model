@@ -51,9 +51,15 @@ speeches <- speeches %>% arrange(date)
 colnames(dow) <- c("date", "dow_price")
 dow <- dow %>% filter( dow_price != ".")
 
+# Parsing sp500 dates
+
+sp500 <- sp500 %>% select(c(Date,Open))
+colnames(sp500) <- c("date", "sp500_price")
+
 ## Joining Datasets
 
 tweets <- rdt %>% mutate(speech = if_else(date %in% speeches$date, 1, 0))
 tweets <- left_join(tweets, dow)
+tweets <- left_join(tweets, sp500)
 
 ## Dealing with missing values
