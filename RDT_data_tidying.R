@@ -11,6 +11,7 @@ rdt <- read_csv("Data/raw_data/rdt.csv")
 speeches <- read_delim("Data/raw_data/trump_speeches.csv", delim = "~")
 reddit <- read_delim("Data/raw_data/reddit_trump.csv", delim = "|")
 sp500 <- read_csv("Data/raw_data/GSPC.csv")
+dow <- read_csv("Data/raw_data/DJIA.csv")
 
 ## Parsing Date Vectors
 
@@ -45,11 +46,14 @@ speeches <- speeches %>% select(-c(id, upload_date))
 speeches <- speeches %>% mutate(date = c)
 speeches <- speeches %>% arrange(date)
 
+# Parsing dow dates
+
+colnames(dow) <- c("date", "dow_price")
+dow <- dow %>% filter( dow_price != ".")
 
 ## Joining Datasets
 
 tweets <- rdt %>% mutate(speech = if_else(date %in% speeches$date, 1, 0))
+tweets <- left_join(tweets, dow)
 
-
-# Trump watches Fox and Friends from 6-9 AM ET, often tweeting during the show. 
-
+## Dealing with missing values
