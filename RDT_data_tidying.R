@@ -5,6 +5,7 @@
 ## Loading Packages
 library(tidyverse)
 library(lubridate)
+library(plyr)
 
 ## Loading Data
 rdt <- read_csv("Data/raw_data/rdt.csv")
@@ -73,6 +74,16 @@ d <- tweets %>% group_by(hour(tweets$time)) %>% count() %>% as.data.frame()
 d$n <- d$n / t_days
 colnames(d) <- c("hour", "count")
 d %>% ggplot(aes(hour, count)) + geom_point() + geom_line()
+
+# Day of the week
+
+tweets <- tweets %>% mutate(weekday = weekdays(date))
+ggplot() + geom_bar(aes(tweets$weekday))
+e <- tweets %>% group_by(weekday) %>% count() %>% as.data.frame()
+f <- ddply(tweets, "date", head, 1) %>% select(weekday) %>% count()
+e$n <- e$n / f$freq
+
+e %>% ggplot(aes(weekday, n)) + geom_bar(stat = "identity") + ylab(label = "tweets")
 
 ## Dealing with missing values
 
