@@ -68,23 +68,42 @@ tweets <- left_join(tweets, sp500)
 # Time of day
 
 ggplot() + geom_bar(aes((hour(tweets$time)))) + xlab(label = "hour")
-t_days <- tweets$date %>% unique() %>% length()
-atpd <- nrow(tweets) / t_days
-d <- tweets %>% group_by(hour(tweets$time)) %>% count() %>% as.data.frame()
-d$n <- d$n / t_days
-colnames(d) <- c("hour", "count")
-d %>% ggplot(aes(hour, count)) + geom_point() + geom_line()
+d <- tweets %>% mutate(hour = hour(tweets$time)) %>% group_by(hour) %>% select(hour) %>% count()
+d %>% ggplot(aes(hour, freq)) + geom_bar(stat = "identity") + ylab(label = "tweets")
 
 # Day of the week
 
 tweets <- tweets %>% mutate(weekday = weekdays(date))
 ggplot() + geom_bar(aes(tweets$weekday))
-e <- tweets %>% group_by(weekday) %>% count() %>% as.data.frame()
-f <- ddply(tweets, "date", head, 1) %>% select(weekday) %>% count()
-e$n <- e$n / f$freq
 
-e %>% ggplot(aes(weekday, n)) + geom_bar(stat = "identity") + ylab(label = "tweets")
+e <- unique(tweets$date) %>% as.data.frame()
+colnames(e) <- c("date") 
+e <- e %>% mutate(weekday = weekdays(date))
+f <- e %>% group_by(weekday) %>% select(weekday) %>% count()
+a <- tweets %>% group_by(weekday) %>% select(weekday) %>% count()
+daily <- a$freq / f$freq
+
+a %>% ggplot(aes(weekday, daily)) + geom_bar(stat = "identity") + ylab(label = "tweets")
+
+## Creating time series data
+
+by_date <- seq(as.Date("2014-01-01"), as.Date("2018-06-17"), "days") %>% as_data_frame()
+colnames(by_date) <- c("date")
+
+g <- tweets$date %>% count() %>% as.data.frame()
+colnames(g) <- c("date","tweet_count")
+
+# Joining with other data
+
+by_date <- left_join(by_date, g)
+by_date[is.na(by_date)] <- 0
+by_date <- by_date %>% mutate(weekday = weekdays(date))
+by_date <- left_join(by_date, dow)
+by_date <- left_join(by_date, sp500)
+by_date <-  by_date %>% mutate(speech = if_else(date %in% speeches$date, 1, 0))
+
+by_date %>% mutate(index = 1:nrow(by_date)) %>%
+  ggplot(aes(index, tweet_count)) + geom_bar(stat = "identity") +
+  xlab("days since 2014/1/1") + ylab("daily tweets")
 
 ## Dealing with missing values
-
-
