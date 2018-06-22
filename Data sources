@@ -1,5 +1,9 @@
 Data sources: 
 
+rdt tweets:
+
+http://trumptwitterarchive.com/
+
 speeches:
 
 https://www.kaggle.com/binksbiz/mrtrump

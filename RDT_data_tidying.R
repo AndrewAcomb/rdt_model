@@ -18,23 +18,10 @@ dow <- read_csv("Data/raw_data/DJIA.csv")
 
 # Parsing rdt dates and times
 
-a <- strsplit(rdt$created_at, " ") %>% unlist() %>% na.omit()
-b <- matrix(a, nrow = 2)
+rdt <- rdt %>% mutate(datetime = mdy_hms(created_at) - hours(5))
+rdt <- rdt %>% mutate(date = date(datetime), time = substring(datetime, 11)) %>% head(nrow(rdt) -1)
 
-rdt_dates <- b[1,] %>% parse_date("%m-%d-%Y")
-rdt_times <- b[2,] %>% parse_time("%H:%M:%S")
-rdt_days <- rdt_dates %>% day()
-rdt_months <- rdt_dates %>% month()
-rdt_years <- rdt_dates %>% year()
-rdt_hours <- rdt_times %>% hour()
-rdt_minutes <- rdt_times %>% minute()
-rdt_seconds <- rdt_times %>% second()
 
-rdt <- rdt %>% select(-c(id_str, created_at))
-rdt <- rdt[1:16838,]
-
-rdt <- rdt %>% mutate(date = rdt_dates, time = rdt_times)
-rdt <- rdt %>% arrange(date,time)
 # Parsing speeches dates
 
 speeches$upload_date <- speeches$upload_date %>% parse_date("%Y%m%d")
@@ -66,8 +53,7 @@ tweets <- left_join(tweets, sp500)
 ## Adding additional predictors
 
 # Time of day
-
-ggplot() + geom_bar(aes((hour(tweets$time)))) + xlab(label = "hour")
+ggplot() + geom_bar(aes((hour(hms(as.character(tweets$time)))))) + xlab(label = "hour")
 d <- tweets %>% mutate(hour = hour(tweets$time)) %>% group_by(hour) %>% select(hour) %>% count()
 d %>% ggplot(aes(hour, freq)) + geom_bar(stat = "identity") + ylab(label = "tweets")
 
