@@ -48,35 +48,15 @@ colnames(sp500) <- c("date", "sp500_price")
 # Parsing Schedule Dates
 
 schedules$date <- as.Date(schedules$date, format = "%m/%d/%y")
-schedules <- schedules %>% select(c(date, type, details, location, coverage))
-colnames(schedules) <- c("date", "sched_type", "sched_text",
-                         "sched_location", "sched_coverage")
+schedules <- schedules %>% select(c(date, details))
+colnames(schedules) <- c("date","sched_text")
+schedules <- aggregate(data= schedules, sched_text~date, FUN = function(t) paste(t))
+
 ## Joining Datasets
 
 tweets <- rdt %>% mutate(speech = if_else(date %in% speeches$date, 1, 0))
 tweets <- left_join(tweets, dow)
 tweets <- left_join(tweets, sp500)
-
-## Adding additional predictors
-
-# Time of day
-ggplot() + geom_bar(aes((hour(hms(as.character(tweets$time)))))) + xlab(label = "hour")
-d <- tweets %>% mutate(hour = hour(tweets$time)) %>% group_by(hour) %>% select(hour) %>% count()
-d %>% ggplot(aes(hour, freq)) + geom_bar(stat = "identity") + ylab(label = "tweets")
-
-# Day of the week
-
-tweets <- tweets %>% mutate(weekday = weekdays(date))
-ggplot() + geom_bar(aes(tweets$weekday))
-
-e <- unique(tweets$date) %>% as.data.frame()
-colnames(e) <- c("date") 
-e <- e %>% mutate(weekday = weekdays(date))
-f <- e %>% group_by(weekday) %>% select(weekday) %>% count()
-a <- tweets %>% group_by(weekday) %>% select(weekday) %>% count()
-daily <- a$freq / f$freq
-
-a %>% ggplot(aes(weekday, daily)) + geom_bar(stat = "identity") + ylab(label = "tweets")
 
 ## Creating time series data
 
@@ -117,7 +97,9 @@ in_string <- function(x) {
 phrase_matrix <- sapply(sched_strings, in_string)
 phrase_df <- phrase_matrix %>% as_data_frame()
 colnames(phrase_df) <- paste0("sched_contains_", sched_strings)
-phrase_df <- phrase_df %>% mutate(date = by_date$date)
+phrase_df <- phrase_df %>% tail(514)
+phrase_df <- phrase_df %>% mutate(date = tail(by_date$date,514))
+
 # Adding to time series df
 by_date <- left_join(by_date, phrase_df)
 
