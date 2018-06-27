@@ -13,6 +13,7 @@ speeches <- read_delim("Data/raw_data/trump_speeches.csv", delim = "~")
 reddit <- read_delim("Data/raw_data/reddit_trump.csv", delim = "|")
 sp500 <- read_csv("Data/raw_data/GSPC.csv")
 dow <- read_csv("Data/raw_data/DJIA.csv")
+schedules <- read_csv("Data/raw_data/RDT_Schedules_27-06-18.csv")
 
 ## Parsing Date Vectors
 
@@ -44,6 +45,12 @@ dow <- dow %>% filter( dow_price != ".")
 sp500 <- sp500 %>% select(c(Date,Open))
 colnames(sp500) <- c("date", "sp500_price")
 
+# Parsing Schedule Dates
+
+schedules$date <- as.Date(schedules$date, format = "%m/%d/%y")
+schedules <- schedules %>% select(c(date, type, details, location, coverage))
+colnames(schedules) <- c("date", "sched_type", "sched_text",
+                         "sched_location", "sched_coverage")
 ## Joining Datasets
 
 tweets <- rdt %>% mutate(speech = if_else(date %in% speeches$date, 1, 0))
@@ -87,9 +94,12 @@ by_date <- by_date %>% mutate(weekday = weekdays(date))
 by_date <- left_join(by_date, dow)
 by_date <- left_join(by_date, sp500)
 by_date <-  by_date %>% mutate(speech = if_else(date %in% speeches$date, 1, 0))
+by_date <- left_join(by_date, schedules)
 
 by_date %>% mutate(index = 1:nrow(by_date)) %>%
   ggplot(aes(index, tweet_count)) + geom_bar(stat = "identity") +
   xlab("days since 2014/1/1") + ylab("daily tweets")
 
+
 ## Dealing with missing values
+
